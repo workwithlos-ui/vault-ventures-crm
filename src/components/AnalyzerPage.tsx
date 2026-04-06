@@ -1,0 +1,181 @@
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { NavSidebar } from './PipelinePage';
+import { Sparkles, AlertTriangle, TrendingUp, ChevronDown } from 'lucide-react';
+
+interface Deal {
+  id: number; propertyName: string; city: string; state: string; units: number;
+  sellerAskingPrice: number; noi: number; capRate: number; occupancyRate: number;
+  stage: number; leadRating: string;
+}
+
+export default function AnalyzerPage() {
+  const router = useRouter();
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [selectedDealId, setSelectedDealId] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState('');
+  const [error, setError] = useState('');
+  const [token, setToken] = useState('');
+
+  useEffect(() => {
+    const t = localStorage.getItem('auth_token');
+    if (!t) { router.push('/login'); return; }
+    setToken(t);
+    fetch('/api/deals', { headers: { Authorization: `Bearer ${t}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        setDeals(list);
+        // Pre-select from URL param
+        const qid = router.query.dealId as string;
+        if (qid) setSelectedDealId(qid);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [router.query.dealId]);
+
+  const handleAnalyze = async () => {
+    if (!selectedDealId) return;
+    setAnalyzing(true);
+    setAnalysis('');
+    setError('');
+    try {
+      const res = await fetch(`/api/deals/${selectedDealId}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setAnalysis(data.analysis || 'No analysis returned.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to analyze deal.');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const selectedDeal = deals.find((d) => String(d.id) === selectedDealId);
+
+  if (loading) return <div className="min-h-screen bg-gradient-dark flex items-center justify-center"><div className="text-amber-500 text-lg">Loading...</div></div>;
+
+  return (
+    <div className="min-h-screen bg-gradient-dark flex">
+      <NavSidebar />
+      <div className="flex-1 ml-16 md:ml-56">
+        <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl px-6 py-4 sticky top-0 z-40">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-purple-500/20 flex items-center justify-center">
+              <Sparkles size={18} className="text-purple-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white">AI Deal Analyzer</h1>
+              <p className="text-white/50 text-sm">Context-aware analysis powered by GPT-4</p>
+            </div>
+          </div>
+        </header>
+
+        <div className="max-w-4xl mx-auto p-6 space-y-6">
+          {/* Deal Selector */}
+          <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
+            <h2 className="text-base font-bold text-amber-400 mb-4">Select Deal to Analyze</h2>
+            <div className="flex gap-3 flex-wrap">
+              <div className="relative flex-1 min-w-64">
+                <select
+                  className="input-dark text-sm appearance-none pr-8"
+                  value={selectedDealId}
+                  onChange={(e) => { setSelectedDealId(e.target.value); setAnalysis(''); }}
+                >
+                  <option value="">Choose a deal...</option>
+                  {deals.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.propertyName || `Deal #${d.id}`}{d.city ? ` - ${d.city}, ${d.state}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+              </div>
+              <button
+                onClick={handleAnalyze}
+                disabled={!selectedDealId || analyzing}
+                className="flex items-center gap-2 px-6 py-2 bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600 transition-colors text-sm disabled:opacity-50"
+              >
+                <Sparkles size={15} />
+                {analyzing ? 'Analyzing...' : 'Analyze Deal'}
+              </button>
+            </div>
+
+            {/* Deal Summary */}
+            {selectedDeal && (
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: 'Units', value: selectedDeal.units || '-' },
+                  { label: 'Asking Price', value: selectedDeal.sellerAskingPrice ? `$${Number(selectedDeal.sellerAskingPrice).toLocaleString()}` : '-' },
+                  { label: 'NOI', value: selectedDeal.noi ? `$${Number(selectedDeal.noi).toLocaleString()}` : '-' },
+                  { label: 'Occupancy', value: selectedDeal.occupancyRate ? `${selectedDeal.occupancyRate}%` : '-' },
+                ].map((item) => (
+                  <div key={item.label} className="bg-white/5 rounded-xl p-3">
+                    <div className="text-xs text-white/40">{item.label}</div>
+                    <div className="text-sm font-semibold text-white mt-0.5">{item.value}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Analysis Result */}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5 flex items-start gap-3">
+              <AlertTriangle size={18} className="text-red-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="font-semibold text-red-400">Analysis Failed</div>
+                <div className="text-sm text-red-300/80 mt-1">{error}</div>
+              </div>
+            </div>
+          )}
+
+          {analyzing && (
+            <div className="bg-white/3 border border-purple-500/20 rounded-2xl p-8 text-center">
+              <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
+                <Sparkles size={22} className="text-purple-400" />
+              </div>
+              <p className="text-white/70 text-sm">Analyzing deal data with GPT-4...</p>
+              <p className="text-white/40 text-xs mt-1">This may take 10-20 seconds</p>
+            </div>
+          )}
+
+          {analysis && !analyzing && (
+            <div className="bg-white/3 border border-purple-500/20 rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp size={18} className="text-purple-400" />
+                <h2 className="text-base font-bold text-white">Deal Analysis</h2>
+                <span className="text-xs text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full">AI Generated</span>
+              </div>
+              <div className="prose prose-invert prose-sm max-w-none">
+                {analysis.split('\n').map((line, i) => {
+                  if (line.startsWith('## ')) return <h3 key={i} className="text-amber-400 font-bold text-base mt-4 mb-2">{line.replace('## ', '')}</h3>;
+                  if (line.startsWith('# ')) return <h2 key={i} className="text-amber-400 font-bold text-lg mt-4 mb-2">{line.replace('# ', '')}</h2>;
+                  if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="font-bold text-white mt-2">{line.replace(/\*\*/g, '')}</p>;
+                  if (line.startsWith('- ') || line.startsWith('* ')) return <li key={i} className="text-white/80 ml-4 mt-1 list-disc">{line.replace(/^[-*] /, '')}</li>;
+                  if (line.trim() === '') return <div key={i} className="h-2" />;
+                  return <p key={i} className="text-white/80 mt-1 leading-relaxed">{line}</p>;
+                })}
+              </div>
+            </div>
+          )}
+
+          {!analysis && !analyzing && !error && (
+            <div className="text-center py-16 text-white/30">
+              <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
+                <Sparkles size={28} className="text-white/20" />
+              </div>
+              <p className="text-lg font-medium">Select a deal and click Analyze</p>
+              <p className="text-sm mt-1">The AI will review all deal data and provide context-aware insights, red flags, and recommendations.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
