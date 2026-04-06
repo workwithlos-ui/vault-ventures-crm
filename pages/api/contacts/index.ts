@@ -7,7 +7,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await initDb();
     const token = (req.headers.authorization || '').split(' ')[1];
     if (!verifyToken(token)) return res.status(401).json({ error: 'Unauthorized' });
-
     if (req.method === 'GET') {
       const contacts = await getContacts();
       return res.status(200).json(contacts);
