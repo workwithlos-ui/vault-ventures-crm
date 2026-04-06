@@ -1,7 +1,6 @@
-import dynamic from 'next/dynamic';
-const AnalyzerComp = dynamic(() => import('../src/components/AnalyzerPage'), { ssr: false });
+import AnalyzerPage from '../src/components/AnalyzerPage';
 export default function AnalyzerRoute() {
-  return <AnalyzerComp />;
+  return <AnalyzerPage />;
 }
 export async function getServerSideProps() {
   return { props: {} };

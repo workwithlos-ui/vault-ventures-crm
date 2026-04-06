@@ -1,7 +1,6 @@
-import dynamic from 'next/dynamic';
-const DueDiligenceComp = dynamic(() => import('../src/components/DueDiligencePage'), { ssr: false });
+import DueDiligencePage from '../src/components/DueDiligencePage';
 export default function DueDiligenceRoute() {
-  return <DueDiligenceComp />;
+  return <DueDiligencePage />;
 }
 export async function getServerSideProps() {
   return { props: {} };

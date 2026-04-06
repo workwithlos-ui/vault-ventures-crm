@@ -1,11 +1,7 @@
-import dynamic from 'next/dynamic';
-
-const PipelineComp = dynamic(() => import('../src/components/PipelinePage'), { ssr: false });
-
+import PipelinePage from '../src/components/PipelinePage';
 export default function PipelineRoute() {
-  return <PipelineComp />;
+  return <PipelinePage />;
 }
-
 export async function getServerSideProps() {
   return { props: {} };
 }

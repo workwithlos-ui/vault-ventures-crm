@@ -1,11 +1,7 @@
-import dynamic from 'next/dynamic';
-
-const LoginComp = dynamic(() => import('../src/components/LoginPage'), { ssr: false });
-
+import LoginPage from '../src/components/LoginPage';
 export default function LoginRoute() {
-  return <LoginComp />;
+  return <LoginPage />;
 }
-
 export async function getServerSideProps() {
   return { props: {} };
 }

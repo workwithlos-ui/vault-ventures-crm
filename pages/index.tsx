@@ -1,11 +1,7 @@
-import dynamic from 'next/dynamic';
-
-const DashboardComp = dynamic(() => import('../src/components/DashboardPage'), { ssr: false });
-
+import DashboardPage from '../src/components/DashboardPage';
 export default function Home() {
-  return <DashboardComp />;
+  return <DashboardPage />;
 }
-
 export async function getServerSideProps() {
   return { props: {} };
 }

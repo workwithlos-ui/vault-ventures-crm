@@ -1,11 +1,7 @@
-import dynamic from 'next/dynamic';
-
-const DealDetailComp = dynamic(() => import('../../src/components/DealDetailPage'), { ssr: false });
-
+import DealDetailPage from '../../src/components/DealDetailPage';
 export default function DealDetailRoute() {
-  return <DealDetailComp />;
+  return <DealDetailPage />;
 }
-
 export async function getServerSideProps() {
   return { props: {} };
 }

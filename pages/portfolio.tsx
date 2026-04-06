@@ -1,11 +1,7 @@
-import dynamic from 'next/dynamic';
-
-const PortfolioComp = dynamic(() => import('../src/components/PortfolioPage'), { ssr: false });
-
+import PortfolioPage from '../src/components/PortfolioPage';
 export default function PortfolioRoute() {
-  return <PortfolioComp />;
+  return <PortfolioPage />;
 }
-
 export async function getServerSideProps() {
   return { props: {} };
 }

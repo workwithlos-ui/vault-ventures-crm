@@ -1,11 +1,7 @@
-import dynamic from 'next/dynamic';
-
-const NewDealComp = dynamic(() => import('../src/components/NewDealPage'), { ssr: false });
-
+import NewDealPage from '../src/components/NewDealPage';
 export default function NewDealRoute() {
-  return <NewDealComp />;
+  return <NewDealPage />;
 }
-
 export async function getServerSideProps() {
   return { props: {} };
 }

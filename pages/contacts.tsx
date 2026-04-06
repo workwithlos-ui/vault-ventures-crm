@@ -1,11 +1,7 @@
-import dynamic from 'next/dynamic';
-
-const ContactsComp = dynamic(() => import('../src/components/ContactsPage'), { ssr: false });
-
+import ContactsPage from '../src/components/ContactsPage';
 export default function ContactsRoute() {
-  return <ContactsComp />;
+  return <ContactsPage />;
 }
-
 export async function getServerSideProps() {
   return { props: {} };
 }

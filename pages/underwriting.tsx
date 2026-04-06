@@ -1,7 +1,6 @@
-import dynamic from 'next/dynamic';
-const UnderwritingComp = dynamic(() => import('../src/components/UnderwritingPage'), { ssr: false });
+import UnderwritingPage from '../src/components/UnderwritingPage';
 export default function UnderwritingRoute() {
-  return <UnderwritingComp />;
+  return <UnderwritingPage />;
 }
 export async function getServerSideProps() {
   return { props: {} };
