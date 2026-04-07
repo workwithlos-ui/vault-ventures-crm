@@ -349,12 +349,19 @@ export async function getDashboardStats() {
     FROM checklist_items GROUP BY dealId
   `) as any[];
 
+  // Compute total pipeline value
+  const totalPipelineValue = allDeals.reduce((sum: number, d: any) => {
+    const price = parseFloat(d.sellerAskingPrice || d.askingPrice || '0') || 0;
+    return sum + price;
+  }, 0);
+
   return {
     totalDeals: totalDeals.count,
     activeDeals: activeDeals.count,
     closedDeals: closedDeals.count,
     totalContacts: totalContacts.count,
-    allDeals,
+    totalPipelineValue,
+    deals: allDeals,
     stageBreakdown,
     checklistSummary,
   };

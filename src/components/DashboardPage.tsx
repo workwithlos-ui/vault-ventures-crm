@@ -194,7 +194,7 @@ export default function DashboardPage() {
     );
   }
 
-  const deals: any[] = data?.allDeals || [];
+  const deals: any[] = data?.deals || data?.allDeals || [];
   const checklistMap: Record<number, any> = {};
   (data?.checklistSummary || []).forEach((c: any) => { checklistMap[c.dealId] = c; });
 
