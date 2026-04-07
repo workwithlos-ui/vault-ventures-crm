@@ -1,7 +1,49 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { NavSidebar } from './PipelinePage';
-import { Calculator, ChevronDown, TrendingUp, DollarSign } from 'lucide-react';
+import { Calculator, ChevronDown, TrendingUp, DollarSign, Shield, AlertTriangle, CheckCircle, XCircle, Target, Zap } from 'lucide-react';
+
+function getVerdict(noi: number, offerMid: number, sellerAsking: number, impliedCap: number, capRateMid: number, occupancy: number, units: number) {
+  if (noi <= 0) return { verdict: 'Insufficient Data', color: '#6b7280', icon: AlertTriangle, reasons: ['NOI not available — cannot underwrite'], assumption: 'N/A', risk: 'N/A' };
+  const gap = sellerAsking > 0 ? ((sellerAsking - offerMid) / offerMid) * 100 : 0;
+  const reasons: string[] = [];
+  const risks: string[] = [];
+  let score = 50;
+
+  // Cap rate analysis
+  if (impliedCap >= capRateMid + 1) { score += 20; reasons.push(`Strong cap rate at ${impliedCap.toFixed(1)}% — above target`); }
+  else if (impliedCap >= capRateMid) { score += 10; reasons.push(`Cap rate at ${impliedCap.toFixed(1)}% meets target`); }
+  else if (impliedCap > 0) { score -= 15; risks.push(`Cap rate ${impliedCap.toFixed(1)}% below ${capRateMid}% target`); }
+
+  // Price gap
+  if (sellerAsking > 0 && gap <= -5) { score += 15; reasons.push('Asking price below mid offer — strong negotiating position'); }
+  else if (sellerAsking > 0 && gap <= 5) { score += 5; reasons.push('Asking price close to mid offer — negotiable'); }
+  else if (sellerAsking > 0 && gap > 15) { score -= 15; risks.push(`Seller asking ${gap.toFixed(0)}% above mid offer — significant gap`); }
+  else if (sellerAsking > 0) { score -= 5; risks.push(`Seller asking ${gap.toFixed(0)}% above mid offer`); }
+
+  // Occupancy
+  if (occupancy >= 90) { score += 10; reasons.push(`High occupancy at ${occupancy}%`); }
+  else if (occupancy >= 80) { score += 5; }
+  else if (occupancy > 0 && occupancy < 70) { score -= 10; risks.push(`Low occupancy at ${occupancy}% — lease-up risk`); }
+  else if (occupancy > 0) { risks.push(`Moderate occupancy at ${occupancy}%`); }
+
+  // NOI strength
+  if (noi > 200000) { score += 5; reasons.push(`Strong NOI at $${(noi/1000).toFixed(0)}K`); }
+
+  // Determine verdict
+  let verdict: string, color: string, icon: any;
+  if (score >= 70) { verdict = 'Looks Attractive'; color = '#22c55e'; icon = CheckCircle; }
+  else if (score >= 45) { verdict = 'Borderline'; color = '#f59e0b'; icon = AlertTriangle; }
+  else { verdict = 'High Risk'; color = '#ef4444'; icon = XCircle; }
+
+  const topReasons = reasons.slice(0, 3);
+  if (topReasons.length < 3 && risks.length > 0) topReasons.push(...risks.slice(0, 3 - topReasons.length));
+
+  const assumption = occupancy > 0 ? `Assumes ${occupancy}% occupancy is sustainable and market rents hold` : 'Assumes current income levels are sustainable';
+  const biggestRisk = risks[0] || (occupancy < 80 ? 'Lease-up risk if occupancy drops' : 'Market rate compression in competitive environment');
+
+  return { verdict, color, icon, reasons: topReasons, assumption, risk: biggestRisk, offerLow: noi / (capRateMid / 100 + 0.01), offerHigh: noi / (capRateMid / 100 - 0.01) };
+}
 
 interface Deal {
   id: number; propertyName: string; city: string; state: string; units: number;
@@ -193,6 +235,57 @@ export default function UnderwritingPage() {
 
             {/* Results */}
             <div className="space-y-4">
+              {/* VERDICT CARD */}
+              {selectedDeal && noi > 0 && (() => {
+                const v = getVerdict(noi, offerMid, sellerAsking, impliedCapRate, parseFloat(capRateMid), Number(selectedDeal.occupancyRate) || 0, Number(selectedDeal.units) || 0);
+                const VIcon = v.icon;
+                return (
+                  <div className="border rounded-2xl p-6 space-y-4" style={{ borderColor: `${v.color}40`, background: `${v.color}08` }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${v.color}20` }}>
+                          <VIcon size={24} style={{ color: v.color }} />
+                        </div>
+                        <div>
+                          <div className="text-xs text-white/40 uppercase tracking-wider font-medium">Underwriting Verdict</div>
+                          <div className="text-2xl font-bold" style={{ color: v.color }}>{v.verdict}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-white/40">Suggested Offer</div>
+                        <div className="text-lg font-bold text-amber-400">{formatCurrency(offerMid)}</div>
+                        <div className="text-[10px] text-white/30">{formatCurrency(offerLow)} — {formatCurrency(offerHigh)}</div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="bg-white/[0.04] rounded-xl p-3">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Target size={12} className="text-blue-400" />
+                          <span className="text-[10px] text-blue-400 uppercase tracking-wider font-bold">Key Reasons</span>
+                        </div>
+                        <ul className="space-y-1">
+                          {v.reasons.map((r: string, i: number) => <li key={i} className="text-xs text-white/60">\u2022 {r}</li>)}
+                        </ul>
+                      </div>
+                      <div className="bg-white/[0.04] rounded-xl p-3">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Zap size={12} className="text-amber-400" />
+                          <span className="text-[10px] text-amber-400 uppercase tracking-wider font-bold">Biggest Assumption</span>
+                        </div>
+                        <p className="text-xs text-white/60">{v.assumption}</p>
+                      </div>
+                      <div className="bg-white/[0.04] rounded-xl p-3">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <AlertTriangle size={12} className="text-red-400" />
+                          <span className="text-[10px] text-red-400 uppercase tracking-wider font-bold">Biggest Risk</span>
+                        </div>
+                        <p className="text-xs text-white/60">{v.risk}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
                 <h2 className="text-base font-bold text-amber-400 mb-4">Income Statement</h2>
                 <div className="space-y-2">

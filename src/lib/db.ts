@@ -322,20 +322,40 @@ export async function getDashboardStats() {
   const [activeDeals] = await query("SELECT COUNT(*) as count FROM deals WHERE stage NOT IN ('closed', 'dead_deal', 'passed')") as any[];
   const [closedDeals] = await query("SELECT COUNT(*) as count FROM deals WHERE stage = 'closed'") as any[];
   const [totalContacts] = await query('SELECT COUNT(*) as count FROM contacts') as any[];
-  const recentDealsRaw = await query('SELECT id, sellerName, companyName, city, state, askingPrice, stage, leadRating, createdAt FROM deals ORDER BY createdAt DESC LIMIT 5') as any[];
-  const recentDeals = (recentDealsRaw as any[]).map(d => ({
+  // Get ALL deal data for mission control intelligence
+  const allDealsRaw = await query('SELECT * FROM deals ORDER BY createdAt DESC') as any[];
+  const allDeals = (allDealsRaw as any[]).map(d => ({
     ...d,
     propertyName: d.companyName || d.sellerName || `Deal #${d.id}`,
     sellerAskingPrice: d.askingPrice,
+    sellerPhone: d.phone,
+    sellerEmail: d.email,
+    address: d.propertyAddress,
+    units: d.nccUnits,
+    buildingSqFt: d.grossSqft,
+    occupancyRate: d.currentOccupancy,
+    noi: d.yearlyNOI,
+    marketNotes: d.callNotes,
+    valueAddNotes: d.valueAddStrategy,
   }));
   const stageBreakdown = await query('SELECT stage, COUNT(*) as count FROM deals GROUP BY stage') as any[];
+  // Get checklist summary per deal
+  const checklistSummary = await query(`
+    SELECT dealId,
+      COUNT(*) as total,
+      SUM(CASE WHEN status = 'Complete' THEN 1 ELSE 0 END) as completed,
+      SUM(CASE WHEN status = 'Blocked' THEN 1 ELSE 0 END) as blocked,
+      SUM(CASE WHEN status = 'In Progress' THEN 1 ELSE 0 END) as inProgress
+    FROM checklist_items GROUP BY dealId
+  `) as any[];
 
   return {
     totalDeals: totalDeals.count,
     activeDeals: activeDeals.count,
     closedDeals: closedDeals.count,
     totalContacts: totalContacts.count,
-    recentDeals,
+    allDeals,
     stageBreakdown,
+    checklistSummary,
   };
 }

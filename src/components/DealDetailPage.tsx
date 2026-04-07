@@ -2,7 +2,202 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { NavSidebar } from './PipelinePage';
-import { ArrowLeft, Save, Trash2, Plus, Phone, Mail, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, Phone, Mail, ExternalLink, AlertTriangle, FileX, Zap, TrendingUp, TrendingDown, Target } from 'lucide-react';
+
+const STAGE_LABELS: Record<string, string> = {
+  new_opportunity: 'New Opportunity', initial_contact: 'Initial Contact',
+  intro_call_scheduled: 'Intro Call Scheduled', intro_call_complete: 'Intro Call Complete',
+  under_loi: 'Under LOI', loi_accepted: 'LOI Accepted',
+  psa_sent: 'PSA Sent', psa_executed: 'PSA Executed',
+  due_diligence: 'Due Diligence', under_contract: 'Under Contract',
+  financing: 'Financing', clear_to_close: 'Clear to Close',
+  closed: 'Closed', dead_deal: 'Dead Deal', passed: 'Passed',
+};
+
+const STAGE_COLORS_STR: Record<string, string> = {
+  new_opportunity: '#6b7280', initial_contact: '#6b7280',
+  intro_call_scheduled: '#8b5cf6', intro_call_complete: '#3b82f6',
+  under_loi: '#06b6d4', loi_accepted: '#10b981',
+  psa_sent: '#f59e0b', psa_executed: '#f97316',
+  due_diligence: '#ef4444', under_contract: '#ef4444',
+  financing: '#ec4899', clear_to_close: '#a855f7', closed: '#22c55e',
+  dead_deal: '#374151', passed: '#374151',
+};
+
+function getRedFlags(deal: any): string[] {
+  const flags: string[] = [];
+  const occ = Number(deal.occupancyRate);
+  if (occ && occ < 70) flags.push(`Low occupancy (${occ}%)`);
+  if (!deal.noi || Number(deal.noi) === 0) flags.push('Missing NOI');
+  if (!deal.units || Number(deal.units) === 0) flags.push('Missing unit count');
+  const noi = Number(deal.noi); const ask = Number(deal.sellerAskingPrice);
+  if (noi > 0 && ask > 0 && (noi / ask) * 100 < 5) flags.push(`Very low cap rate (${((noi / ask) * 100).toFixed(1)}%)`);
+  if (deal.floodZone && (deal.floodZone === 'Zone A' || deal.floodZone === 'Zone AE')) flags.push(`Flood risk (${deal.floodZone})`);
+  if (deal.ageOfRoof && Number(deal.ageOfRoof) > 20) flags.push(`Old roof (${deal.ageOfRoof} yrs)`);
+  if (!deal.hasRentRoll) flags.push('No rent roll');
+  if (!deal.hasPL) flags.push('No P&L');
+  return flags;
+}
+
+function getMissingData(deal: any): string[] {
+  const m: string[] = [];
+  if (!deal.sellerAskingPrice || Number(deal.sellerAskingPrice) === 0) m.push('Purchase price');
+  if (!deal.noi || Number(deal.noi) === 0) m.push('NOI');
+  if (!deal.occupancyRate || Number(deal.occupancyRate) === 0) m.push('Occupancy');
+  if (!deal.units || Number(deal.units) === 0) m.push('Unit count');
+  if (!deal.hasRentRoll) m.push('Rent roll');
+  if (!deal.hasPL) m.push('P&L');
+  if (!deal.hasFacilityMap) m.push('Facility map');
+  return m;
+}
+
+function getNextStep(deal: any): string {
+  const missing = getMissingData(deal);
+  const stage = deal.stage;
+  if (missing.includes('NOI') || missing.includes('Rent roll')) return 'Request rent roll & financials from seller';
+  if (missing.includes('P&L')) return 'Request P&L statement';
+  if (stage === 'initial_contact' || stage === 'new_opportunity') return 'Schedule intro call with seller';
+  if (stage === 'intro_call_scheduled' || stage === 'intro_call_complete') return 'Complete underwriting & prepare LOI';
+  if (stage === 'under_loi') return 'Negotiate LOI terms';
+  if (stage === 'loi_accepted' || stage === 'psa_sent') return 'Draft & execute PSA';
+  if (stage === 'psa_executed' || stage === 'due_diligence') return 'Complete due diligence checklist';
+  if (stage === 'financing') return 'Secure financing commitment';
+  if (stage === 'clear_to_close') return 'Prepare for closing';
+  if (stage === 'closed') return 'Transition to portfolio management';
+  if (stage === 'dead_deal' || stage === 'passed') return 'Archive or deprioritize';
+  return 'Review deal status';
+}
+
+function fmtCurrency(val: any) {
+  const n = Number(val);
+  if (!val || isNaN(n) || n === 0) return '-';
+  if (n >= 1000000) return `$${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000) return `$${(n / 1000).toFixed(0)}K`;
+  return `$${n.toLocaleString()}`;
+}
+
+function DealBrief({ deal }: { deal: any }) {
+  const noi = Number(deal.noi) || 0;
+  const ask = Number(deal.sellerAskingPrice) || 0;
+  const occ = Number(deal.occupancyRate) || 0;
+  const units = Number(deal.units) || 0;
+  const impliedCap = ask > 0 && noi > 0 ? ((noi / ask) * 100).toFixed(1) : null;
+  const offerLow = noi > 0 ? noi / 0.085 : null;
+  const offerMid = noi > 0 ? noi / 0.075 : null;
+  const offerHigh = noi > 0 ? noi / 0.065 : null;
+  const flags = getRedFlags(deal);
+  const missing = getMissingData(deal);
+  const nextStep = getNextStep(deal);
+  const stageLabel = STAGE_LABELS[deal.stage] || deal.stage;
+  const stageColor = STAGE_COLORS_STR[deal.stage] || '#6b7280';
+
+  return (
+    <div className="bg-gradient-to-br from-amber-500/5 via-transparent to-purple-500/5 border border-amber-500/20 rounded-2xl p-6 space-y-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-bold text-amber-400 flex items-center gap-2">
+          <Target size={16} /> Investment Snapshot
+        </h2>
+        <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ color: stageColor, background: `${stageColor}20` }}>{stageLabel}</span>
+      </div>
+
+      {/* Key Metrics Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="bg-white/[0.04] rounded-xl p-3">
+          <div className="text-[10px] text-white/40 uppercase tracking-wider">Ask Price</div>
+          <div className="text-lg font-bold text-amber-400 mt-1">{fmtCurrency(ask)}</div>
+        </div>
+        <div className="bg-white/[0.04] rounded-xl p-3">
+          <div className="text-[10px] text-white/40 uppercase tracking-wider">NOI</div>
+          <div className="text-lg font-bold text-white mt-1">{fmtCurrency(noi)}</div>
+        </div>
+        <div className="bg-white/[0.04] rounded-xl p-3">
+          <div className="text-[10px] text-white/40 uppercase tracking-wider">Cap Rate</div>
+          <div className={`text-lg font-bold mt-1 ${impliedCap && Number(impliedCap) >= 7 ? 'text-green-400' : impliedCap && Number(impliedCap) >= 5 ? 'text-amber-400' : 'text-red-400'}`}>
+            {impliedCap ? `${impliedCap}%` : '-'}
+          </div>
+        </div>
+        <div className="bg-white/[0.04] rounded-xl p-3">
+          <div className="text-[10px] text-white/40 uppercase tracking-wider">Occupancy</div>
+          <div className={`text-lg font-bold mt-1 ${occ >= 85 ? 'text-green-400' : occ >= 70 ? 'text-amber-400' : 'text-red-400'}`}>
+            {occ > 0 ? `${occ}%` : '-'}
+          </div>
+        </div>
+        <div className="bg-white/[0.04] rounded-xl p-3">
+          <div className="text-[10px] text-white/40 uppercase tracking-wider">Units</div>
+          <div className="text-lg font-bold text-white mt-1">{units > 0 ? units : '-'}</div>
+        </div>
+        <div className="bg-white/[0.04] rounded-xl p-3">
+          <div className="text-[10px] text-white/40 uppercase tracking-wider">Rating</div>
+          <div className="text-lg font-bold mt-1" style={{ color: deal.leadRating === 'Hot' ? '#ef4444' : deal.leadRating === 'Warm' ? '#f97316' : '#3b82f6' }}>
+            {deal.leadRating || '-'}
+          </div>
+        </div>
+      </div>
+
+      {/* Offer Range */}
+      {offerLow && offerMid && offerHigh && (
+        <div className="bg-white/[0.04] rounded-xl p-4">
+          <div className="text-[10px] text-white/40 uppercase tracking-wider mb-2">Estimated Offer Range (6.5% - 8.5% Cap)</div>
+          <div className="flex items-center gap-4">
+            <div className="text-center">
+              <div className="text-xs text-white/40">Low</div>
+              <div className="text-sm font-bold text-red-400">{fmtCurrency(offerLow)}</div>
+            </div>
+            <div className="flex-1 h-2 bg-white/10 rounded-full relative">
+              <div className="absolute inset-y-0 rounded-full bg-gradient-to-r from-red-500 via-amber-500 to-green-500" style={{ left: '10%', right: '10%' }} />
+              {ask > 0 && offerLow && offerHigh && (
+                <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-2 border-amber-500 shadow-lg"
+                  style={{ left: `${Math.min(Math.max(((ask - offerLow) / (offerHigh - offerLow)) * 80 + 10, 5), 95)}%` }}
+                  title={`Ask: ${fmtCurrency(ask)}`} />
+              )}
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-white/40">High</div>
+              <div className="text-sm font-bold text-green-400">{fmtCurrency(offerHigh)}</div>
+            </div>
+          </div>
+          <div className="text-center mt-1">
+            <span className="text-xs text-amber-400 font-semibold">Mid: {fmtCurrency(offerMid)}</span>
+            {ask > 0 && offerMid && <span className="text-xs text-white/30 ml-2">Ask is {ask > offerMid ? `${(((ask - offerMid) / offerMid) * 100).toFixed(0)}% above` : `${(((offerMid - ask) / offerMid) * 100).toFixed(0)}% below`} mid</span>}
+          </div>
+        </div>
+      )}
+
+      {/* Red Flags + Missing Data + Next Step */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-white/[0.04] rounded-xl p-3">
+          <div className="flex items-center gap-1.5 mb-2">
+            <AlertTriangle size={12} className="text-red-400" />
+            <span className="text-[10px] text-red-400 uppercase tracking-wider font-bold">Red Flags ({flags.length})</span>
+          </div>
+          {flags.length > 0 ? (
+            <ul className="space-y-1">
+              {flags.map((f, i) => <li key={i} className="text-xs text-white/60">• {f}</li>)}
+            </ul>
+          ) : <p className="text-xs text-green-400">No red flags detected</p>}
+        </div>
+        <div className="bg-white/[0.04] rounded-xl p-3">
+          <div className="flex items-center gap-1.5 mb-2">
+            <FileX size={12} className="text-purple-400" />
+            <span className="text-[10px] text-purple-400 uppercase tracking-wider font-bold">Missing Data ({missing.length})</span>
+          </div>
+          {missing.length > 0 ? (
+            <ul className="space-y-1">
+              {missing.map((m, i) => <li key={i} className="text-xs text-white/60">• {m}</li>)}
+            </ul>
+          ) : <p className="text-xs text-green-400">All critical data present</p>}
+        </div>
+        <div className="bg-white/[0.04] rounded-xl p-3">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Zap size={12} className="text-amber-400" />
+            <span className="text-[10px] text-amber-400 uppercase tracking-wider font-bold">Next Step</span>
+          </div>
+          <p className="text-xs text-white/80 font-medium">{nextStep}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const STAGES = [
   { id: 1, name: 'Initial Contact' }, { id: 2, name: 'Intro Call Scheduled' }, { id: 3, name: 'Intro Call Complete' },
@@ -273,6 +468,9 @@ export default function DealDetailPage() {
         </header>
 
         <div className="max-w-5xl mx-auto p-6 space-y-6">
+          {/* Deal Brief / Investment Snapshot */}
+          <DealBrief deal={deal} />
+
           {/* Stage Quick Change */}
           <div className="bg-white/3 border border-white/10 rounded-2xl p-4">
             <div className="flex items-center gap-4 flex-wrap">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { NavSidebar } from './PipelinePage';
-import { ClipboardList, ChevronDown, Check, Clock, AlertTriangle, Circle } from 'lucide-react';
+import { ClipboardList, ChevronDown, Check, Clock, AlertTriangle, Circle, Shield, FileX, Zap, Target } from 'lucide-react';
 
 interface ChecklistItem {
   id: number; category: string; task: string; priority: string; status: string; notes: string; fileUrl?: string; fileName?: string;
@@ -159,32 +159,91 @@ export default function DueDiligencePage() {
             </div>
           </div>
 
-          {/* Progress */}
-          {selectedDealId && items.length > 0 && (
-            <div className="bg-white/3 border border-white/10 rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-white">Overall Progress</span>
-                <span className="text-sm font-bold text-amber-400">{completedItems} / {totalItems} ({progress}%)</span>
+          {/* Progress Intelligence Summary */}
+          {selectedDealId && items.length > 0 && (() => {
+            const blockedItems = items.filter(i => i.status === 'Blocked');
+            const highPriorityOpen = items.filter(i => i.priority === 'High' && i.status !== 'Complete' && i.status !== 'N/A');
+            const missingDocs = items.filter(i => (i.task.toLowerCase().includes('review') || i.task.toLowerCase().includes('obtain') || i.task.toLowerCase().includes('request') || i.task.toLowerCase().includes('confirm')) && i.status === 'Not Started' && i.priority !== 'Low');
+            const inProgressItems = items.filter(i => i.status === 'In Progress');
+            const notStartedHigh = items.filter(i => i.status === 'Not Started' && i.priority === 'High');
+            // Recommended next action
+            let nextAction = 'Continue working through checklist items';
+            if (blockedItems.length > 0) nextAction = `Resolve ${blockedItems.length} blocked item${blockedItems.length > 1 ? 's' : ''}: ${blockedItems[0].task}`;
+            else if (notStartedHigh.length > 0) nextAction = `Start high-priority: ${notStartedHigh[0].task}`;
+            else if (inProgressItems.length > 0) nextAction = `Complete in-progress: ${inProgressItems[0].task}`;
+            else if (missingDocs.length > 0) nextAction = `Request: ${missingDocs[0].task}`;
+            else if (progress === 100) nextAction = 'All items complete — ready to proceed';
+
+            const progressColor = progress === 100 ? '#22c55e' : progress >= 60 ? '#f59e0b' : '#ef4444';
+
+            return (
+              <div className="border rounded-2xl p-6 space-y-4" style={{ borderColor: `${progressColor}30`, background: `${progressColor}06` }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center relative" style={{ background: `${progressColor}20` }}>
+                      <span className="text-xl font-bold" style={{ color: progressColor }}>{progress}%</span>
+                    </div>
+                    <div>
+                      <div className="text-xs text-white/40 uppercase tracking-wider">Due Diligence Progress</div>
+                      <div className="text-lg font-bold text-white">{completedItems} of {totalItems} items complete</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: progressColor }} />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-white/[0.04] rounded-xl p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <AlertTriangle size={11} className="text-red-400" />
+                      <span className="text-[10px] text-red-400 uppercase tracking-wider font-bold">Blocked</span>
+                    </div>
+                    <div className="text-2xl font-bold text-red-400">{blockedItems.length}</div>
+                    {blockedItems.length > 0 && <div className="text-[10px] text-white/40 mt-0.5 truncate">{blockedItems[0].task}</div>}
+                  </div>
+                  <div className="bg-white/[0.04] rounded-xl p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Target size={11} className="text-amber-400" />
+                      <span className="text-[10px] text-amber-400 uppercase tracking-wider font-bold">High Priority Open</span>
+                    </div>
+                    <div className="text-2xl font-bold text-amber-400">{highPriorityOpen.length}</div>
+                  </div>
+                  <div className="bg-white/[0.04] rounded-xl p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <FileX size={11} className="text-purple-400" />
+                      <span className="text-[10px] text-purple-400 uppercase tracking-wider font-bold">Docs Needed</span>
+                    </div>
+                    <div className="text-2xl font-bold text-purple-400">{missingDocs.length}</div>
+                  </div>
+                  <div className="bg-white/[0.04] rounded-xl p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Clock size={11} className="text-blue-400" />
+                      <span className="text-[10px] text-blue-400 uppercase tracking-wider font-bold">In Progress</span>
+                    </div>
+                    <div className="text-2xl font-bold text-blue-400">{inProgressItems.length}</div>
+                  </div>
+                </div>
+                <div className="bg-white/[0.04] rounded-xl p-3 flex items-center gap-2">
+                  <Zap size={14} className="text-amber-400 flex-shrink-0" />
+                  <div>
+                    <div className="text-[10px] text-amber-400 uppercase tracking-wider font-bold">Recommended Next Action</div>
+                    <div className="text-sm text-white/80 font-medium">{nextAction}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 text-xs text-white/40">
+                  {Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
+                    const count = items.filter((i) => i.status === status).length;
+                    if (count === 0) return null;
+                    return (
+                      <span key={status} className="flex items-center gap-1" style={{ color: cfg.color }}>
+                        <cfg.icon size={11} /> {count} {status}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${progress}%`, background: progress === 100 ? '#22c55e' : '#f59e0b' }}
-                />
-              </div>
-              <div className="flex items-center gap-4 mt-3 text-xs text-white/40">
-                {Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
-                  const count = items.filter((i) => i.status === status).length;
-                  if (count === 0) return null;
-                  return (
-                    <span key={status} className="flex items-center gap-1" style={{ color: cfg.color }}>
-                      <cfg.icon size={11} /> {count} {status}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Loading State */}
           {loadingChecklist && (

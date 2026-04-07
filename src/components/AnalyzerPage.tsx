@@ -1,7 +1,31 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { NavSidebar } from './PipelinePage';
-import { Sparkles, AlertTriangle, TrendingUp, ChevronDown } from 'lucide-react';
+import { Sparkles, AlertTriangle, TrendingUp, ChevronDown, Target, Shield, Lightbulb, ArrowRight, CheckCircle, XCircle } from 'lucide-react';
+
+function parseStructuredAnalysis(text: string) {
+  const sections: { title: string; content: string; lines: string[] }[] = [];
+  let current: { title: string; content: string; lines: string[] } | null = null;
+  for (const line of text.split('\n')) {
+    if (line.startsWith('## ')) {
+      if (current) sections.push(current);
+      current = { title: line.replace('## ', '').trim(), content: '', lines: [] };
+    } else if (current) {
+      current.content += line + '\n';
+      if (line.trim()) current.lines.push(line.trim());
+    }
+  }
+  if (current) sections.push(current);
+  return sections;
+}
+
+const SECTION_CONFIG: Record<string, { icon: any; color: string; bg: string }> = {
+  'Recommendation': { icon: CheckCircle, color: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
+  'Why It Matters': { icon: Target, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
+  'Top 3 Risks': { icon: AlertTriangle, color: '#ef4444', bg: 'rgba(239,68,68,0.08)' },
+  'Value-Add Opportunities': { icon: Lightbulb, color: '#f59e0b', bg: 'rgba(245,158,11,0.08)' },
+  'Next Action': { icon: ArrowRight, color: '#a855f7', bg: 'rgba(168,85,247,0.08)' },
+};
 
 interface Deal {
   id: number; propertyName: string; city: string; state: string; units: number;
@@ -145,25 +169,65 @@ export default function AnalyzerPage() {
             </div>
           )}
 
-          {analysis && !analyzing && (
-            <div className="bg-white/3 border border-purple-500/20 rounded-2xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp size={18} className="text-purple-400" />
-                <h2 className="text-base font-bold text-white">Deal Analysis</h2>
-                <span className="text-xs text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full">AI Generated</span>
-              </div>
-              <div className="prose prose-invert prose-sm max-w-none">
-                {analysis.split('\n').map((line, i) => {
-                  if (line.startsWith('## ')) return <h3 key={i} className="text-amber-400 font-bold text-base mt-4 mb-2">{line.replace('## ', '')}</h3>;
-                  if (line.startsWith('# ')) return <h2 key={i} className="text-amber-400 font-bold text-lg mt-4 mb-2">{line.replace('# ', '')}</h2>;
-                  if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="font-bold text-white mt-2">{line.replace(/\*\*/g, '')}</p>;
-                  if (line.startsWith('- ') || line.startsWith('* ')) return <li key={i} className="text-white/80 ml-4 mt-1 list-disc">{line.replace(/^[-*] /, '')}</li>;
-                  if (line.trim() === '') return <div key={i} className="h-2" />;
-                  return <p key={i} className="text-white/80 mt-1 leading-relaxed">{line}</p>;
+          {analysis && !analyzing && (() => {
+            const sections = parseStructuredAnalysis(analysis);
+            if (sections.length === 0) {
+              // Fallback for unstructured output
+              return (
+                <div className="bg-white/3 border border-purple-500/20 rounded-2xl p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <TrendingUp size={18} className="text-purple-400" />
+                    <h2 className="text-base font-bold text-white">Deal Analysis</h2>
+                    <span className="text-xs text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full">AI Generated</span>
+                  </div>
+                  <div className="prose prose-invert prose-sm max-w-none">
+                    {analysis.split('\n').map((line, i) => {
+                      if (line.startsWith('## ')) return <h3 key={i} className="text-amber-400 font-bold text-base mt-4 mb-2">{line.replace('## ', '')}</h3>;
+                      if (line.startsWith('- ') || line.startsWith('* ')) return <li key={i} className="text-white/80 ml-4 mt-1 list-disc">{line.replace(/^[-*] /, '')}</li>;
+                      if (line.trim() === '') return <div key={i} className="h-2" />;
+                      return <p key={i} className="text-white/80 mt-1 leading-relaxed">{line}</p>;
+                    })}
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <div className="space-y-4">
+                {sections.map((section, idx) => {
+                  const cfg = SECTION_CONFIG[section.title] || { icon: TrendingUp, color: '#a855f7', bg: 'rgba(168,85,247,0.08)' };
+                  const SIcon = cfg.icon;
+                  const isRecommendation = section.title === 'Recommendation';
+                  const isPursue = isRecommendation && (section.content.toUpperCase().includes('PURSUE') || section.content.toUpperCase().includes('BUY'));
+                  const isPass = isRecommendation && section.content.toUpperCase().includes('PASS');
+                  const recColor = isPursue ? '#22c55e' : isPass ? '#ef4444' : '#f59e0b';
+                  const recIcon = isPursue ? CheckCircle : isPass ? XCircle : AlertTriangle;
+                  const RecIcon = isRecommendation ? recIcon : SIcon;
+                  const finalColor = isRecommendation ? recColor : cfg.color;
+                  const finalBg = isRecommendation ? `${recColor}10` : cfg.bg;
+                  return (
+                    <div key={idx} className="border rounded-2xl p-5" style={{ borderColor: `${finalColor}30`, background: finalBg }}>
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${finalColor}20` }}>
+                          <RecIcon size={16} style={{ color: finalColor }} />
+                        </div>
+                        <h3 className="font-bold text-base" style={{ color: finalColor }}>{section.title}</h3>
+                        {isRecommendation && <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: `${recColor}20`, color: recColor }}>{isPursue ? 'PURSUE' : isPass ? 'PASS' : 'NEGOTIATE'}</span>}
+                      </div>
+                      <div className="space-y-1">
+                        {section.lines.map((line, li) => {
+                          const cleaned = line.replace(/^\d+\.\s*/, '').replace(/^[-*]\s*/, '').replace(/\*\*/g, '');
+                          if (line.match(/^\d+\./) || line.startsWith('- ') || line.startsWith('* ')) {
+                            return <div key={li} className="flex items-start gap-2 py-1"><span className="text-white/30 mt-0.5">\u2022</span><span className="text-sm text-white/80 leading-relaxed">{cleaned}</span></div>;
+                          }
+                          return <p key={li} className="text-sm text-white/80 leading-relaxed">{cleaned}</p>;
+                        })}
+                      </div>
+                    </div>
+                  );
                 })}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {!analysis && !analyzing && !error && (
             <div className="text-center py-16 text-white/30">
