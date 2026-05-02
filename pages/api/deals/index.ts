@@ -1,5 +1,5 @@
 import { getDeals, createDeal, initDb } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 function mapDealFields(data: any) {
@@ -31,9 +31,7 @@ function mapDealFields(data: any) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     await initDb();
-    const token = (req.headers.authorization || '').split(' ')[1];
-    if (!verifyToken(token)) return res.status(401).json({ error: 'Unauthorized' });
-    if (req.method === 'GET') {
+if (req.method === 'GET') {
       const deals = await getDeals() as any[];
       // Normalize DB fields to frontend-expected field names
       const normalized = deals.map(d => ({

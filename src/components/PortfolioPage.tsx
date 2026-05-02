@@ -30,13 +30,8 @@ export default function PortfolioPage() {
   const router = useRouter();
   const [deals, setDeals] = useState<ClosedDeal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState('');
-
-  useEffect(() => {
-    const t = localStorage.getItem('auth_token');
-    if (!t) { router.push('/login'); return; }
-    setToken(t);
-    fetch('/api/deals', { headers: { Authorization: `Bearer ${t}` } })
+useEffect(() => {
+fetch('/api/deals', { headers: { Authorization: 'none' } })
       .then((r) => r.json())
       .then((data) => {
         const closed = Array.isArray(data) ? data.filter((d: any) => d.stage === 11 || d.stage === '11') : [];
@@ -46,17 +41,17 @@ export default function PortfolioPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="min-h-screen bg-gradient-dark flex items-center justify-center"><div className="text-amber-500 text-lg">Loading portfolio...</div></div>;
+  if (loading) return <div className="min-h-screen bg-[#09090b] flex items-center justify-center"><div className="text-white/80 text-lg">Loading portfolio...</div></div>;
 
   const totalValue = deals.reduce((sum, d) => sum + (Number(d.finalPurchasePrice) || Number(d.purchasePrice) || 0), 0);
   const totalUnits = deals.reduce((sum, d) => sum + (Number(d.units) || 0), 0);
   const avgCapRate = deals.length > 0 ? deals.reduce((sum, d) => sum + (Number(d.capRate) || 0), 0) / deals.filter((d) => d.capRate).length : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-dark flex">
+    <div className="min-h-screen bg-[#09090b] flex">
       <NavSidebar />
-      <div className="flex-1 ml-16 md:ml-56">
-        <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl px-6 py-4 sticky top-0 z-40">
+      <div className="flex-1 ml-16 md:ml-52">
+        <header className="border-b border-white/[0.05] bg-[#09090b]/80 backdrop-blur-md px-6 py-4 sticky top-0 z-40">
           <h1 className="text-xl font-bold text-white">Portfolio</h1>
           <p className="text-white/50 text-sm mt-0.5">{deals.length} closed acquisitions</p>
         </header>
@@ -70,7 +65,7 @@ export default function PortfolioPage() {
               { label: 'Total Units', value: totalUnits.toLocaleString(), icon: TrendingUp, color: '#3b82f6' },
               { label: 'Avg Cap Rate', value: avgCapRate > 0 ? `${avgCapRate.toFixed(1)}%` : '-', icon: TrendingUp, color: '#a855f7' },
             ].map((kpi) => (
-              <div key={kpi.label} className="bg-white/3 border border-white/10 rounded-2xl p-5">
+              <div key={kpi.label} className="bg-white/3 border border-white/[0.05] rounded-xl p-5">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${kpi.color}20` }}>
                     <kpi.icon size={18} style={{ color: kpi.color }} />
@@ -87,18 +82,18 @@ export default function PortfolioPage() {
               <div className="text-5xl mb-4">🏢</div>
               <p className="text-xl font-medium">No closed deals yet</p>
               <p className="text-sm mt-2">Deals moved to Stage 11 (Closed) will appear here.</p>
-              <Link href="/pipeline" className="inline-block mt-6 px-6 py-2.5 bg-amber-500 text-black rounded-lg font-semibold hover:bg-amber-600 transition-colors text-sm">
+              <Link href="/pipeline" className="inline-block mt-6 px-6 py-2.5 bg-white text-[#09090b] rounded-lg font-semibold hover:bg-white/90 transition-colors text-sm">
                 View Pipeline
               </Link>
             </div>
           ) : (
             <>
               {/* Desktop Table */}
-              <div className="hidden lg:block bg-white/3 border border-white/10 rounded-2xl overflow-hidden">
+              <div className="hidden lg:block bg-white/3 border border-white/[0.05] rounded-xl overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-white/10">
+                      <tr className="border-b border-white/[0.05]">
                         {['Property', 'Location', 'Units', 'Purchase Price', 'Closing Date', 'Financing', 'Entity', 'Mgmt', 'NOI Actual', 'NOI Projected', ''].map((h) => (
                           <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-white/40 whitespace-nowrap">{h}</th>
                         ))}
@@ -112,7 +107,7 @@ export default function PortfolioPage() {
                           </td>
                           <td className="px-4 py-3 text-white/50 whitespace-nowrap">{[d.city, d.state].filter(Boolean).join(', ')}</td>
                           <td className="px-4 py-3 text-white/70">{d.units || '-'}</td>
-                          <td className="px-4 py-3 text-amber-400 font-semibold whitespace-nowrap">{formatCurrency(d.finalPurchasePrice || d.purchasePrice)}</td>
+                          <td className="px-4 py-3 text-white font-semibold whitespace-nowrap">{formatCurrency(d.finalPurchasePrice || d.purchasePrice)}</td>
                           <td className="px-4 py-3 text-white/50 whitespace-nowrap">
                             <div className="flex items-center gap-1.5">
                               <Calendar size={12} />
@@ -133,7 +128,7 @@ export default function PortfolioPage() {
                             ) : <span className="text-white/30">-</span>}
                           </td>
                           <td className="px-4 py-3">
-                            <Link href={`/deals/${d.id}`} className="text-white/30 hover:text-amber-400 transition-colors">
+                            <Link href={`/deals/${d.id}`} className="text-white/30 hover:text-white transition-colors">
                               <ExternalLink size={15} />
                             </Link>
                           </td>
@@ -147,18 +142,18 @@ export default function PortfolioPage() {
               {/* Mobile Cards */}
               <div className="lg:hidden space-y-4">
                 {deals.map((d) => (
-                  <div key={d.id} className="bg-white/3 border border-white/10 rounded-2xl p-4">
+                  <div key={d.id} className="bg-white/3 border border-white/[0.05] rounded-xl p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="font-bold text-white">{d.propertyName || `Deal #${d.id}`}</div>
                         <div className="text-white/50 text-sm">{[d.city, d.state].filter(Boolean).join(', ')}</div>
                       </div>
-                      <Link href={`/deals/${d.id}`} className="text-white/30 hover:text-amber-400 transition-colors">
+                      <Link href={`/deals/${d.id}`} className="text-white/30 hover:text-white transition-colors">
                         <ExternalLink size={16} />
                       </Link>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div><div className="text-white/40 text-xs">Purchase Price</div><div className="text-amber-400 font-semibold">{formatCurrency(d.finalPurchasePrice || d.purchasePrice)}</div></div>
+                      <div><div className="text-white/40 text-xs">Purchase Price</div><div className="text-white font-semibold">{formatCurrency(d.finalPurchasePrice || d.purchasePrice)}</div></div>
                       <div><div className="text-white/40 text-xs">Units</div><div className="text-white">{d.units || '-'}</div></div>
                       <div><div className="text-white/40 text-xs">Closing Date</div><div className="text-white/70">{formatDate(d.closingDate)}</div></div>
                       <div><div className="text-white/40 text-xs">Financing</div><div className="text-white/70 text-xs">{d.financingStructure || '-'}</div></div>

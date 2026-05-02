@@ -1,5 +1,5 @@
 import { getChecklist, createChecklistItem, initChecklistForDeal, initDb } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const DD_CHECKLIST_TEMPLATE = [
@@ -19,10 +19,7 @@ const DD_CHECKLIST_TEMPLATE = [
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     await initDb();
-    const token = (req.headers.authorization || '').split(' ')[1];
-    if (!verifyToken(token)) return res.status(401).json({ error: 'Unauthorized' });
-
-    const { id } = req.query as { id: string };
+const { id } = req.query as { id: string };
 
     if (req.method === 'GET') {
       await initChecklistForDeal(id, DD_CHECKLIST_TEMPLATE);

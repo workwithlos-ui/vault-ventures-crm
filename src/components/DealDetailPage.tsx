@@ -92,9 +92,9 @@ function DealBrief({ deal }: { deal: any }) {
   const stageColor = STAGE_COLORS_STR[deal.stage] || '#6b7280';
 
   return (
-    <div className="bg-gradient-to-br from-amber-500/5 via-transparent to-purple-500/5 border border-amber-500/20 rounded-2xl p-6 space-y-5">
+    <div className="bg-gradient-to-br from-amber-500/5 via-transparent to-purple-500/5 border border-amber-500/20 rounded-xl p-6 space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-amber-400 flex items-center gap-2">
+        <h2 className="text-base font-bold text-white flex items-center gap-2">
           <Target size={16} /> Investment Snapshot
         </h2>
         <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ color: stageColor, background: `${stageColor}20` }}>{stageLabel}</span>
@@ -104,7 +104,7 @@ function DealBrief({ deal }: { deal: any }) {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="bg-white/[0.04] rounded-xl p-3">
           <div className="text-[10px] text-white/40 uppercase tracking-wider">Ask Price</div>
-          <div className="text-lg font-bold text-amber-400 mt-1">{fmtCurrency(ask)}</div>
+          <div className="text-lg font-bold text-white mt-1">{fmtCurrency(ask)}</div>
         </div>
         <div className="bg-white/[0.04] rounded-xl p-3">
           <div className="text-[10px] text-white/40 uppercase tracking-wider">NOI</div>
@@ -112,13 +112,13 @@ function DealBrief({ deal }: { deal: any }) {
         </div>
         <div className="bg-white/[0.04] rounded-xl p-3">
           <div className="text-[10px] text-white/40 uppercase tracking-wider">Cap Rate</div>
-          <div className={`text-lg font-bold mt-1 ${impliedCap && Number(impliedCap) >= 7 ? 'text-green-400' : impliedCap && Number(impliedCap) >= 5 ? 'text-amber-400' : 'text-red-400'}`}>
+          <div className={`text-lg font-bold mt-1 ${impliedCap && Number(impliedCap) >= 7 ? 'text-green-400' : impliedCap && Number(impliedCap) >= 5 ? 'text-white' : 'text-red-400'}`}>
             {impliedCap ? `${impliedCap}%` : '-'}
           </div>
         </div>
         <div className="bg-white/[0.04] rounded-xl p-3">
           <div className="text-[10px] text-white/40 uppercase tracking-wider">Occupancy</div>
-          <div className={`text-lg font-bold mt-1 ${occ >= 85 ? 'text-green-400' : occ >= 70 ? 'text-amber-400' : 'text-red-400'}`}>
+          <div className={`text-lg font-bold mt-1 ${occ >= 85 ? 'text-green-400' : occ >= 70 ? 'text-white' : 'text-red-400'}`}>
             {occ > 0 ? `${occ}%` : '-'}
           </div>
         </div>
@@ -157,7 +157,7 @@ function DealBrief({ deal }: { deal: any }) {
             </div>
           </div>
           <div className="text-center mt-1">
-            <span className="text-xs text-amber-400 font-semibold">Mid: {fmtCurrency(offerMid)}</span>
+            <span className="text-xs text-white font-semibold">Mid: {fmtCurrency(offerMid)}</span>
             {ask > 0 && offerMid && <span className="text-xs text-white/30 ml-2">Ask is {ask > offerMid ? `${(((ask - offerMid) / offerMid) * 100).toFixed(0)}% above` : `${(((offerMid - ask) / offerMid) * 100).toFixed(0)}% below`} mid</span>}
           </div>
         </div>
@@ -189,8 +189,8 @@ function DealBrief({ deal }: { deal: any }) {
         </div>
         <div className="bg-white/[0.04] rounded-xl p-3">
           <div className="flex items-center gap-1.5 mb-2">
-            <Zap size={12} className="text-amber-400" />
-            <span className="text-[10px] text-amber-400 uppercase tracking-wider font-bold">Next Step</span>
+            <Zap size={12} className="text-white" />
+            <span className="text-[10px] text-white uppercase tracking-wider font-bold">Next Step</span>
           </div>
           <p className="text-xs text-white/80 font-medium">{nextStep}</p>
         </div>
@@ -281,8 +281,8 @@ function EditCheckbox({ label, checked, onChange }: { label: string; checked: bo
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
-      <h2 className="text-base font-bold text-amber-400 mb-4">{title}</h2>
+    <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
+      <h2 className="text-base font-bold text-white mb-4">{title}</h2>
       {children}
     </div>
   );
@@ -298,21 +298,17 @@ export default function DealDetailPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-  const [token, setToken] = useState('');
-  const [showAddContact, setShowAddContact] = useState(false);
+const [showAddContact, setShowAddContact] = useState(false);
   const [newContact, setNewContact] = useState({ name: '', phone: '', email: '', type: 'Seller', company: '' });
   const [savingContact, setSavingContact] = useState(false);
   const [deletingDeal, setDeletingDeal] = useState(false);
 
   useEffect(() => {
-    const t = localStorage.getItem('auth_token');
-    if (!t) { router.push('/login'); return; }
-    setToken(t);
-    if (!id) return;
+if (!id) return;
     Promise.all([
-      fetch(`/api/deals/${id}`, { headers: { Authorization: `Bearer ${t}` } }).then((r) => r.json()),
-      fetch(`/api/deals/${id}/unit-mix`, { headers: { Authorization: `Bearer ${t}` } }).then((r) => r.json()),
-      fetch(`/api/contacts?dealId=${id}`, { headers: { Authorization: `Bearer ${t}` } }).then((r) => r.json()),
+      fetch(`/api/deals/${id}`, { headers: { Authorization: 'none' } }).then((r) => r.json()),
+      fetch(`/api/deals/${id}/unit-mix`, { headers: { Authorization: 'none' } }).then((r) => r.json()),
+      fetch(`/api/contacts?dealId=${id}`, { headers: { Authorization: 'none' } }).then((r) => r.json()),
     ]).then(([dealData, unitMixData, contactsData]) => {
       setDeal(dealData);
       setUnitMix(Array.isArray(unitMixData) ? unitMixData.map((r: any) => ({
@@ -354,7 +350,7 @@ export default function DealDetailPage() {
       };
       const res = await fetch(`/api/deals/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', Authorization: 'none' },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('Failed to save');
@@ -362,7 +358,7 @@ export default function DealDetailPage() {
       if (unitMix.length > 0) {
         await fetch(`/api/deals/${id}/unit-mix`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers: { 'Content-Type': 'application/json', Authorization: 'none' },
           body: JSON.stringify({ rows: unitMix }),
         });
       }
@@ -379,7 +375,7 @@ export default function DealDetailPage() {
     if (!confirm('Delete this deal? This cannot be undone.')) return;
     setDeletingDeal(true);
     try {
-      await fetch(`/api/deals/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      await fetch(`/api/deals/${id}`, { method: 'DELETE', headers: { Authorization: 'none' } });
       router.push('/pipeline');
     } catch {
       setDeletingDeal(false);
@@ -392,7 +388,7 @@ export default function DealDetailPage() {
     try {
       const res = await fetch('/api/contacts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', Authorization: 'none' },
         body: JSON.stringify({ ...newContact, dealId: id }),
       });
       const data = await res.json();
@@ -414,17 +410,17 @@ export default function DealDetailPage() {
   const totalSqFt = unitMix.reduce((sum, r) => sum + (parseInt(r.count) || 0) * (parseInt(r.size) || 0), 0);
   const gpri = unitMix.reduce((sum, r) => sum + (parseInt(r.count) || 0) * (parseFloat(r.currentRate) || 0) * 12, 0);
 
-  if (loading) return <div className="min-h-screen bg-gradient-dark flex items-center justify-center"><div className="text-amber-500 text-lg">Loading deal...</div></div>;
-  if (!deal || deal.error) return <div className="min-h-screen bg-gradient-dark flex items-center justify-center"><div className="text-red-400">Deal not found. <Link href="/pipeline" className="text-amber-400 underline">Back to pipeline</Link></div></div>;
+  if (loading) return <div className="min-h-screen bg-[#09090b] flex items-center justify-center"><div className="text-white/80 text-lg">Loading deal...</div></div>;
+  if (!deal || deal.error) return <div className="min-h-screen bg-[#09090b] flex items-center justify-center"><div className="text-red-400">Deal not found. <Link href="/pipeline" className="text-white underline">Back to pipeline</Link></div></div>;
 
   const stageName = STAGES.find((s) => s.id === parseInt(deal.stage))?.name || 'Unknown';
   const stageColor = STAGE_COLORS[parseInt(deal.stage)] || '#6b7280';
 
   return (
-    <div className="min-h-screen bg-gradient-dark flex">
+    <div className="min-h-screen bg-[#09090b] flex">
       <NavSidebar />
-      <div className="flex-1 ml-16 md:ml-56">
-        <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl px-6 py-4 sticky top-0 z-40">
+      <div className="flex-1 ml-16 md:ml-52">
+        <header className="border-b border-white/[0.05] bg-[#09090b]/80 backdrop-blur-md px-6 py-4 sticky top-0 z-40">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <Link href="/pipeline" className="text-white/50 hover:text-white transition-colors flex-shrink-0">
@@ -457,7 +453,7 @@ export default function DealDetailPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-black rounded-lg font-semibold hover:bg-amber-600 transition-colors text-sm disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-white text-[#09090b] rounded-lg font-semibold hover:bg-white/90 transition-colors text-sm disabled:opacity-50"
               >
                 <Save size={15} />
                 {saving ? 'Saving...' : 'Save'}
@@ -472,7 +468,7 @@ export default function DealDetailPage() {
           <DealBrief deal={deal} />
 
           {/* Stage Quick Change */}
-          <div className="bg-white/3 border border-white/10 rounded-2xl p-4">
+          <div className="bg-white/3 border border-white/[0.05] rounded-xl p-4">
             <div className="flex items-center gap-4 flex-wrap">
               <span className="text-sm text-white/50 font-medium">Pipeline Stage:</span>
               <div className="flex gap-2 flex-wrap">
@@ -586,13 +582,13 @@ export default function DealDetailPage() {
               </table>
             </div>
             <div className="flex items-center justify-between mt-3">
-              <button type="button" onClick={addUnitRow} className="flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300 transition-colors">
+              <button type="button" onClick={addUnitRow} className="flex items-center gap-1.5 text-sm text-white hover:text-white/80 transition-colors">
                 <Plus size={14} /> Add Row
               </button>
               <div className="flex items-center gap-6 text-xs text-white/50">
                 <span>Total: <span className="text-white font-semibold">{totalUnits} units</span></span>
                 <span>Sq Ft: <span className="text-white font-semibold">{totalSqFt.toLocaleString()}</span></span>
-                <span>GPRI: <span className="text-amber-400 font-semibold">${gpri.toLocaleString()}/yr</span></span>
+                <span>GPRI: <span className="text-white font-semibold">${gpri.toLocaleString()}/yr</span></span>
               </div>
             </div>
           </SectionCard>
@@ -668,10 +664,10 @@ export default function DealDetailPage() {
                 <p className="text-white/30 text-sm">No contacts added yet.</p>
               ) : (
                 contacts.map((c) => (
-                  <div key={c.id} className="flex items-start justify-between p-3 bg-white/5 border border-white/10 rounded-xl">
+                  <div key={c.id} className="flex items-start justify-between p-3 bg-white/5 border border-white/[0.05] rounded-xl">
                     <div>
                       <div className="font-semibold text-white text-sm">{c.name}</div>
-                      {c.type && <div className="text-xs text-amber-400/80 mt-0.5">{c.type}</div>}
+                      {c.type && <div className="text-xs text-white/80 mt-0.5">{c.type}</div>}
                       {c.company && <div className="text-xs text-white/40">{c.company}</div>}
                       <div className="flex items-center gap-3 mt-1.5">
                         {c.phone && <a href={`tel:${c.phone}`} className="flex items-center gap-1 text-xs text-green-400 hover:text-green-300"><Phone size={11} /> {c.phone}</a>}
@@ -683,7 +679,7 @@ export default function DealDetailPage() {
               )}
             </div>
             {showAddContact ? (
-              <div className="bg-white/5 border border-white/15 rounded-xl p-4 space-y-3">
+              <div className="bg-white/5 border border-white/[0.06] rounded-xl p-4 space-y-3">
                 <h4 className="text-sm font-semibold text-white">Add Contact</h4>
                 {[{ k: 'name', l: 'Name *', p: 'Full name' }, { k: 'phone', l: 'Phone', p: '(555) 000-0000' }, { k: 'email', l: 'Email', p: 'email@example.com' }, { k: 'company', l: 'Company', p: 'Company name' }].map((f) => (
                   <div key={f.k}>
@@ -699,13 +695,13 @@ export default function DealDetailPage() {
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setShowAddContact(false)} className="flex-1 px-3 py-2 bg-white/10 text-white rounded-lg text-sm hover:bg-white/15">Cancel</button>
-                  <button onClick={handleAddContact} disabled={savingContact || !newContact.name.trim()} className="flex-1 px-3 py-2 bg-amber-500 text-black rounded-lg font-semibold text-sm hover:bg-amber-600 disabled:opacity-50">
+                  <button onClick={handleAddContact} disabled={savingContact || !newContact.name.trim()} className="flex-1 px-3 py-2 bg-white text-[#09090b] rounded-lg font-semibold text-sm hover:bg-white/90 disabled:opacity-50">
                     {savingContact ? 'Saving...' : 'Save Contact'}
                   </button>
                 </div>
               </div>
             ) : (
-              <button onClick={() => setShowAddContact(true)} className="flex items-center gap-2 text-sm text-amber-400 hover:text-amber-300 transition-colors">
+              <button onClick={() => setShowAddContact(true)} className="flex items-center gap-2 text-sm text-white hover:text-white/80 transition-colors">
                 <Plus size={15} /> Add Contact
               </button>
             )}
@@ -716,7 +712,7 @@ export default function DealDetailPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-8 py-2.5 bg-amber-500 text-black rounded-lg font-semibold hover:bg-amber-600 transition-colors text-sm disabled:opacity-50"
+              className="flex items-center gap-2 px-8 py-2.5 bg-white text-[#09090b] rounded-lg font-semibold hover:bg-white/90 transition-colors text-sm disabled:opacity-50"
             >
               <Save size={15} />
               {saving ? 'Saving Changes...' : 'Save All Changes'}

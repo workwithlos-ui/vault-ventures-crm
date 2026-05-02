@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Plus, Phone, MapPin, Building2, LogOut, LayoutDashboard, Users, BarChart3, Calculator, ClipboardList, Briefcase, ChevronRight, Star } from 'lucide-react';
+import { Plus, Phone, MapPin, Building2, LayoutDashboard, Users, BarChart3, Calculator, ClipboardList, Briefcase, ChevronRight, Star } from 'lucide-react';
 
 const STAGES = [
   { id: 1, name: 'Initial Contact', color: '#6b7280', bg: 'rgba(107,114,128,0.15)' },
@@ -30,7 +30,7 @@ function formatCurrency(val: any) {
 export function NavSidebar() {
   const router = useRouter();
   const navItems = [
-    { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/', icon: LayoutDashboard, label: 'Command Center' },
     { href: '/pipeline', icon: BarChart3, label: 'Pipeline' },
     { href: '/new-deal', icon: Plus, label: 'New Deal' },
     { href: '/contacts', icon: Users, label: 'Contacts' },
@@ -40,31 +40,31 @@ export function NavSidebar() {
     { href: '/portfolio', icon: Briefcase, label: 'Portfolio' },
   ];
   return (
-    <aside className="fixed left-0 top-0 h-full w-16 md:w-56 bg-black/40 backdrop-blur-xl border-r border-white/10 z-50 flex flex-col">
-      <div className="p-4 border-b border-white/10">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0">
-            <Building2 size={16} className="text-black" />
+    <aside className="fixed left-0 top-0 h-full w-16 md:w-52 bg-[#0c0c0e] border-r border-white/[0.04] z-50 flex flex-col">
+      <div className="p-4 md:px-5 md:py-5">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-md bg-white flex items-center justify-center flex-shrink-0">
+            <Building2 size={14} className="text-[#09090b]" />
           </div>
-          <span className="hidden md:block font-bold text-white text-sm">Vault Ventures</span>
+          <span className="hidden md:block font-semibold text-white/90 text-[13px] tracking-tight">Vault Ventures</span>
         </Link>
       </div>
-      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-2 md:px-3 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const active = router.pathname === item.href;
           return (
-            <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${active ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-white/60 hover:text-white hover:bg-white/5'}`}>
-              <item.icon size={18} className="flex-shrink-0" />
-              <span className="hidden md:block text-sm font-medium">{item.label}</span>
+            <Link key={item.href} href={item.href} className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 ${active ? 'bg-white/[0.08] text-white' : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'}`}>
+              <item.icon size={16} className="flex-shrink-0" strokeWidth={active ? 2 : 1.5} />
+              <span className="hidden md:block text-[13px] font-medium">{item.label}</span>
             </Link>
           );
         })}
       </nav>
-      <div className="p-2 border-t border-white/10">
-        <button onClick={() => { localStorage.removeItem('auth_token'); window.location.href = '/login'; }} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-all w-full">
-          <LogOut size={18} className="flex-shrink-0" />
-          <span className="hidden md:block text-sm">Logout</span>
-        </button>
+      <div className="p-3 md:px-5 border-t border-white/[0.04]">
+        <div className="hidden md:flex items-center gap-2 text-white/20 text-[11px]">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/60"></div>
+          <span>Self Storage Acquisitions</span>
+        </div>
       </div>
     </aside>
   );
@@ -77,7 +77,7 @@ interface Deal {
   occupancyRate: number; capRate: number; notes: string;
 }
 
-function AddContactModal({ dealId, onClose, token }: { dealId: number; onClose: () => void; token: string }) {
+function AddContactModal({ dealId, onClose }: { dealId: number; onClose: () => void }) {
   const [form, setForm] = useState({ name: '', phone: '', email: '', type: 'Seller', company: '' });
   const [saving, setSaving] = useState(false);
   const handleSave = async () => {
@@ -86,15 +86,15 @@ function AddContactModal({ dealId, onClose, token }: { dealId: number; onClose: 
     try {
       await fetch('/api/contacts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', Authorization: 'none' },
         body: JSON.stringify({ ...form, dealId }),
       });
       onClose();
     } finally { setSaving(false); }
   };
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-[#1a1a2e] border border-white/20 rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-[#111113] border border-white/[0.08] rounded-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-bold text-white mb-4">Add Contact to Deal</h3>
         <div className="space-y-3">
           {[{ k: 'name', l: 'Name *', p: 'Full name' }, { k: 'phone', l: 'Phone', p: '(555) 000-0000' }, { k: 'email', l: 'Email', p: 'email@example.com' }, { k: 'company', l: 'Company', p: 'Company name' }].map((f) => (
@@ -112,7 +112,7 @@ function AddContactModal({ dealId, onClose, token }: { dealId: number; onClose: 
         </div>
         <div className="flex gap-3 mt-5">
           <button onClick={onClose} className="flex-1 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/15 text-sm">Cancel</button>
-          <button onClick={handleSave} disabled={saving || !form.name.trim()} className="flex-1 px-4 py-2 bg-amber-500 text-black rounded-lg font-semibold hover:bg-amber-600 text-sm disabled:opacity-50">
+          <button onClick={handleSave} disabled={saving || !form.name.trim()} className="flex-1 px-4 py-2 bg-white text-[#09090b] rounded-lg font-semibold hover:bg-white/90 text-sm disabled:opacity-50">
             {saving ? 'Saving...' : 'Save Contact'}
           </button>
         </div>
@@ -121,13 +121,13 @@ function AddContactModal({ dealId, onClose, token }: { dealId: number; onClose: 
   );
 }
 
-function DealCard({ deal, onDragStart, token }: { deal: Deal; onDragStart: (e: React.DragEvent, deal: Deal) => void; token: string }) {
+function DealCard({ deal, onDragStart }: { deal: Deal; onDragStart: (e: React.DragEvent, deal: Deal) => void }) {
   const [showContactModal, setShowContactModal] = useState(false);
   return (
     <>
-      <div draggable onDragStart={(e) => onDragStart(e, deal)} className="bg-white/5 border border-white/10 rounded-xl p-3 cursor-grab hover:border-amber-500/40 transition-all group select-none">
+      <div draggable onDragStart={(e) => onDragStart(e, deal)} className="bg-white/5 border border-white/[0.05] rounded-xl p-3 cursor-grab hover:border-white/[0.12] transition-all group select-none">
         <div className="flex items-start justify-between mb-1.5">
-          <Link href={`/deals/${deal.id}`} className="font-semibold text-white text-sm hover:text-amber-400 transition-colors leading-tight flex-1 pr-2 line-clamp-2">
+          <Link href={`/deals/${deal.id}`} className="font-semibold text-white text-sm hover:text-white transition-colors leading-tight flex-1 pr-2 line-clamp-2">
             {deal.propertyName || `Deal #${deal.id}`}
           </Link>
           {deal.leadRating && (
@@ -147,7 +147,7 @@ function DealCard({ deal, onDragStart, token }: { deal: Deal; onDragStart: (e: R
           {deal.occupancyRate > 0 && <span>{deal.occupancyRate}% occ.</span>}
         </div>
         {deal.sellerAskingPrice > 0 && (
-          <div className="text-amber-400 font-semibold text-sm mb-1.5">{formatCurrency(deal.sellerAskingPrice)}</div>
+          <div className="text-white font-semibold text-sm mb-1.5">{formatCurrency(deal.sellerAskingPrice)}</div>
         )}
         <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
           {deal.sellerPhone ? (
@@ -156,16 +156,16 @@ function DealCard({ deal, onDragStart, token }: { deal: Deal; onDragStart: (e: R
             </a>
           ) : <span />}
           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={() => setShowContactModal(true)} className="text-white/40 hover:text-amber-400 transition-colors" title="Add contact">
+            <button onClick={() => setShowContactModal(true)} className="text-white/40 hover:text-white transition-colors" title="Add contact">
               <Plus size={13} />
             </button>
-            <Link href={`/deals/${deal.id}`} className="text-white/40 hover:text-amber-400 transition-colors">
+            <Link href={`/deals/${deal.id}`} className="text-white/40 hover:text-white transition-colors">
               <ChevronRight size={13} />
             </Link>
           </div>
         </div>
       </div>
-      {showContactModal && <AddContactModal dealId={deal.id} token={token} onClose={() => setShowContactModal(false)} />}
+      {showContactModal && <AddContactModal dealId={deal.id} onClose={() => setShowContactModal(false)} />}
     </>
   );
 }
@@ -173,17 +173,13 @@ function DealCard({ deal, onDragStart, token }: { deal: Deal; onDragStart: (e: R
 export default function PipelinePage() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState('');
-  const [dragDeal, setDragDeal] = useState<Deal | null>(null);
+const [dragDeal, setDragDeal] = useState<Deal | null>(null);
   const [dragOverStage, setDragOverStage] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const t = localStorage.getItem('auth_token');
-    if (!t) { router.push('/login'); return; }
-    setToken(t);
-    fetch('/api/deals', { headers: { Authorization: `Bearer ${t}` } })
-      .then((r) => { if (r.status === 401) { router.push('/login'); throw new Error('Unauthorized'); } return r.json(); })
+fetch('/api/deals', { headers: { Authorization: 'none' } })
+      .then((r) => r.json())
       .then((data) => setDeals(Array.isArray(data) ? data : []))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -205,7 +201,7 @@ export default function PipelinePage() {
     try {
       await fetch(`/api/deals/${dealId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', Authorization: 'none' },
         body: JSON.stringify({ stage: stageId }),
       });
     } catch {
@@ -213,20 +209,20 @@ export default function PipelinePage() {
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-gradient-dark flex items-center justify-center"><div className="text-amber-500 text-lg">Loading pipeline...</div></div>;
+  if (loading) return <div className="min-h-screen bg-[#09090b] flex items-center justify-center"><div className="text-white/80 text-lg">Loading pipeline...</div></div>;
 
   const totalValue = deals.reduce((sum, d) => sum + (Number(d.sellerAskingPrice) || 0), 0);
 
   return (
-    <div className="min-h-screen bg-gradient-dark flex">
+    <div className="min-h-screen bg-[#09090b] flex">
       <NavSidebar />
-      <div className="flex-1 ml-16 md:ml-56 flex flex-col min-h-screen">
-        <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+      <div className="flex-1 ml-16 md:ml-52 flex flex-col min-h-screen">
+        <header className="border-b border-white/[0.05] bg-[#09090b]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-40">
           <div>
             <h1 className="text-xl font-bold text-white">Acquisition Pipeline</h1>
             <p className="text-white/50 text-sm mt-0.5">{deals.length} deals{totalValue > 0 ? ` · ${formatCurrency(totalValue)} total asking` : ''}</p>
           </div>
-          <Link href="/new-deal" className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-black rounded-lg font-semibold hover:bg-amber-600 transition-colors text-sm">
+          <Link href="/new-deal" className="flex items-center gap-2 px-4 py-2 bg-white text-[#09090b] rounded-lg font-semibold hover:bg-white/90 transition-colors text-sm">
             <Plus size={16} />
             <span className="hidden sm:inline">New Deal</span>
           </Link>
@@ -240,13 +236,13 @@ export default function PipelinePage() {
               return (
                 <div
                   key={stage.id}
-                  className={`w-60 flex-shrink-0 flex flex-col rounded-2xl border transition-all duration-150 ${isOver ? 'border-amber-500/60' : 'border-white/10'}`}
+                  className={`w-60 flex-shrink-0 flex flex-col rounded-xl border transition-all duration-150 ${isOver ? 'border-amber-500/60' : 'border-white/[0.05]'}`}
                   style={{ background: isOver ? 'rgba(245,158,11,0.04)' : 'rgba(255,255,255,0.02)' }}
                   onDragOver={(e) => { e.preventDefault(); setDragOverStage(stage.id); }}
                   onDrop={(e) => handleDrop(e, stage.id)}
                   onDragLeave={() => setDragOverStage(null)}
                 >
-                  <div className="p-3 border-b border-white/10 flex-shrink-0">
+                  <div className="p-3 border-b border-white/[0.05] flex-shrink-0">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: stage.color }} />
@@ -260,7 +256,7 @@ export default function PipelinePage() {
                     {stageDeals.length === 0 ? (
                       <div className="text-center py-8 text-white/20 text-xs">Drop deals here</div>
                     ) : (
-                      stageDeals.map((deal) => <DealCard key={deal.id} deal={deal} onDragStart={handleDragStart} token={token} />)
+                      stageDeals.map((deal) => <DealCard key={deal.id} deal={deal} onDragStart={handleDragStart} />)
                     )}
                   </div>
                 </div>

@@ -1,7 +1,6 @@
-import LoginPage from '../src/components/LoginPage';
 export default function LoginRoute() {
-  return <LoginPage />;
+  return null;
 }
 export async function getServerSideProps() {
-  return { props: {} };
+  return { redirect: { destination: '/', permanent: false } };
 }

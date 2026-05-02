@@ -1,13 +1,11 @@
 import { getContactById, updateContact, deleteContact, initDb } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     await initDb();
-    const token = (req.headers.authorization || '').split(' ')[1];
-    if (!verifyToken(token)) return res.status(401).json({ error: 'Unauthorized' });
-    const { id } = req.query;
+const { id } = req.query;
     if (req.method === 'GET') {
       const contact = await getContactById(id as string);
       if (!contact) return res.status(404).json({ error: 'Not found' });

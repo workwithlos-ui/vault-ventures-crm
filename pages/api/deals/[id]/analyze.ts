@@ -1,15 +1,12 @@
 import { getDealById, initDb } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
     await initDb();
-    const token = (req.headers.authorization || '').split(' ')[1];
-    if (!verifyToken(token)) return res.status(401).json({ error: 'Unauthorized' });
-
-    const { id } = req.query as { id: string };
+const { id } = req.query as { id: string };
     const deal = await getDealById(id) as any;
     if (!deal) return res.status(404).json({ error: 'Deal not found' });
 

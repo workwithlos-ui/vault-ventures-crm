@@ -22,7 +22,7 @@ const STAGES = [
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-4">
-      <h2 className="text-base font-bold text-amber-400">{title}</h2>
+      <h2 className="text-base font-bold text-white">{title}</h2>
       {subtitle && <p className="text-xs text-white/40 mt-0.5">{subtitle}</p>}
     </div>
   );
@@ -32,7 +32,7 @@ function Field({ label, children, required }: { label: string; children: React.R
   return (
     <div>
       <label className="block text-xs font-medium text-white/60 mb-1.5">
-        {label}{required && <span className="text-amber-500 ml-0.5">*</span>}
+        {label}{required && <span className="text-white/80 ml-0.5">*</span>}
       </label>
       {children}
     </div>
@@ -141,8 +141,7 @@ export default function NewDealPage() {
     setSaving(true);
     setError('');
     try {
-      const token = localStorage.getItem('auth_token');
-      const payload = {
+const payload = {
         ...form,
         stage: parseInt(form.stage) || 1,
         units: totalUnits || parseInt(form.units) || 0,
@@ -164,7 +163,7 @@ export default function NewDealPage() {
       };
       const res = await fetch('/api/deals', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', Authorization: 'none' },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('Failed to create deal');
@@ -173,7 +172,7 @@ export default function NewDealPage() {
       if (unitMix.some((r) => r.count)) {
         await fetch(`/api/deals/${id}/unit-mix`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers: { 'Content-Type': 'application/json', Authorization: 'none' },
           body: JSON.stringify({ rows: unitMix.filter((r) => r.count) }),
         });
       }
@@ -186,10 +185,10 @@ export default function NewDealPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-dark flex">
+    <div className="min-h-screen bg-[#09090b] flex">
       <NavSidebar />
-      <div className="flex-1 ml-16 md:ml-56">
-        <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+      <div className="flex-1 ml-16 md:ml-52">
+        <header className="border-b border-white/[0.05] bg-[#09090b]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-40">
           <div className="flex items-center gap-3">
             <Link href="/pipeline" className="text-white/50 hover:text-white transition-colors">
               <ArrowLeft size={20} />
@@ -202,7 +201,7 @@ export default function NewDealPage() {
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="px-5 py-2 bg-amber-500 text-black rounded-lg font-semibold hover:bg-amber-600 transition-colors text-sm disabled:opacity-50"
+            className="px-5 py-2 bg-white text-[#09090b] rounded-lg font-semibold hover:bg-white/90 transition-colors text-sm disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save Deal'}
           </button>
@@ -212,7 +211,7 @@ export default function NewDealPage() {
           {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl p-4 text-sm">{error}</div>}
 
           {/* Seller / Contact Info */}
-          <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
+          <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
             <SectionHeader title="Seller / Contact Info" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Field label="Seller Name"><Input value={form.sellerName} onChange={set('sellerName')} placeholder="John Smith" /></Field>
@@ -238,7 +237,7 @@ export default function NewDealPage() {
           </div>
 
           {/* Property Info */}
-          <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
+          <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
             <SectionHeader title="Property Information" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Field label="Property Name" required><Input value={form.propertyName} onChange={set('propertyName')} placeholder="ABC Self Storage" /></Field>
@@ -251,7 +250,7 @@ export default function NewDealPage() {
           </div>
 
           {/* Physical Details */}
-          <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
+          <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
             <SectionHeader title="Physical Details" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
               <Field label="Total Units"><Input value={form.units} onChange={set('units')} placeholder="Auto-calc from unit mix" type="number" /></Field>
@@ -269,7 +268,7 @@ export default function NewDealPage() {
           </div>
 
           {/* Unit Mix */}
-          <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
+          <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
             <SectionHeader title="Unit Mix" subtitle="Auto-calculates total units, sq ft, and GPRI" />
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -308,19 +307,19 @@ export default function NewDealPage() {
               </table>
             </div>
             <div className="flex items-center justify-between mt-3">
-              <button type="button" onClick={addUnitRow} className="flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300 transition-colors">
+              <button type="button" onClick={addUnitRow} className="flex items-center gap-1.5 text-sm text-white hover:text-white/80 transition-colors">
                 <Plus size={14} /> Add Row
               </button>
               <div className="flex items-center gap-6 text-xs text-white/50">
                 <span>Total: <span className="text-white font-semibold">{totalUnits} units</span></span>
                 <span>Sq Ft: <span className="text-white font-semibold">{totalSqFt.toLocaleString()}</span></span>
-                <span>GPRI: <span className="text-amber-400 font-semibold">${gpri.toLocaleString()}/yr</span></span>
+                <span>GPRI: <span className="text-white font-semibold">${gpri.toLocaleString()}/yr</span></span>
               </div>
             </div>
           </div>
 
           {/* Operations */}
-          <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
+          <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
             <SectionHeader title="Operations" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
               <Field label="Management Type">
@@ -338,7 +337,7 @@ export default function NewDealPage() {
           </div>
 
           {/* Financials */}
-          <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
+          <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
             <SectionHeader title="Financials" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Field label="Seller Asking Price"><Input value={form.sellerAskingPrice} onChange={set('sellerAskingPrice')} placeholder="$0" type="number" /></Field>
@@ -352,7 +351,7 @@ export default function NewDealPage() {
           </div>
 
           {/* Market Statistics */}
-          <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
+          <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
             <SectionHeader title="Market Statistics" subtitle="1/3/5-mile radius data" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
               <Field label="Population (5-mile)"><Input value={form.marketPopulation} onChange={set('marketPopulation')} placeholder="50000" type="number" /></Field>
@@ -366,7 +365,7 @@ export default function NewDealPage() {
           </div>
 
           {/* Notes */}
-          <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
+          <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
             <SectionHeader title="Notes" />
             <div className="space-y-4">
               <Field label="Deal Notes">
@@ -386,7 +385,7 @@ export default function NewDealPage() {
             <button
               type="submit"
               disabled={saving}
-              className="px-8 py-2.5 bg-amber-500 text-black rounded-lg font-semibold hover:bg-amber-600 transition-colors text-sm disabled:opacity-50"
+              className="px-8 py-2.5 bg-white text-[#09090b] rounded-lg font-semibold hover:bg-white/90 transition-colors text-sm disabled:opacity-50"
             >
               {saving ? 'Saving Deal...' : 'Save Deal to Pipeline'}
             </button>

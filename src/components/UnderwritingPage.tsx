@@ -68,9 +68,7 @@ export default function UnderwritingPage() {
   const [selectedDealId, setSelectedDealId] = useState('');
   const [unitMix, setUnitMix] = useState<UnitMixRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState('');
-
-  // Inputs
+// Inputs
   const [economicOccupancy, setEconomicOccupancy] = useState('85');
   const [expenseRatio, setExpenseRatio] = useState('35');
   const [capRateLow, setCapRateLow] = useState('5.5');
@@ -84,10 +82,7 @@ export default function UnderwritingPage() {
   const [other, setOther] = useState('');
 
   useEffect(() => {
-    const t = localStorage.getItem('auth_token');
-    if (!t) { router.push('/login'); return; }
-    setToken(t);
-    fetch('/api/deals', { headers: { Authorization: `Bearer ${t}` } })
+fetch('/api/deals', { headers: { Authorization: 'none' } })
       .then((r) => r.json())
       .then((data) => {
         setDeals(Array.isArray(data) ? data : []);
@@ -99,12 +94,12 @@ export default function UnderwritingPage() {
   }, [router.query.dealId]);
 
   useEffect(() => {
-    if (!selectedDealId || !token) return;
-    fetch(`/api/deals/${selectedDealId}/unit-mix`, { headers: { Authorization: `Bearer ${token}` } })
+    if (!selectedDealId) return;
+fetch(`/api/deals/${selectedDealId}/unit-mix`, { headers: { Authorization: 'none' } })
       .then((r) => r.json())
       .then((data) => setUnitMix(Array.isArray(data) ? data : []))
       .catch(console.error);
-  }, [selectedDealId, token]);
+  }, [selectedDealId]);
 
   const selectedDeal = deals.find((d) => String(d.id) === selectedDealId);
 
@@ -130,16 +125,16 @@ export default function UnderwritingPage() {
   const sellerAsking = Number(selectedDeal?.sellerAskingPrice) || 0;
   const impliedCapRate = sellerAsking > 0 && noi > 0 ? (noi / sellerAsking) * 100 : 0;
 
-  if (loading) return <div className="min-h-screen bg-gradient-dark flex items-center justify-center"><div className="text-amber-500 text-lg">Loading...</div></div>;
+  if (loading) return <div className="min-h-screen bg-[#09090b] flex items-center justify-center"><div className="text-white/80 text-lg">Loading...</div></div>;
 
   return (
-    <div className="min-h-screen bg-gradient-dark flex">
+    <div className="min-h-screen bg-[#09090b] flex">
       <NavSidebar />
-      <div className="flex-1 ml-16 md:ml-56">
-        <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl px-6 py-4 sticky top-0 z-40">
+      <div className="flex-1 ml-16 md:ml-52">
+        <header className="border-b border-white/[0.05] bg-[#09090b]/80 backdrop-blur-md px-6 py-4 sticky top-0 z-40">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center">
-              <Calculator size={18} className="text-amber-400" />
+            <div className="w-9 h-9 rounded-xl bg-white/[0.06] flex items-center justify-center">
+              <Calculator size={18} className="text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">Quick Underwriting</h1>
@@ -150,8 +145,8 @@ export default function UnderwritingPage() {
 
         <div className="max-w-5xl mx-auto p-6 space-y-6">
           {/* Deal Selector */}
-          <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
-            <h2 className="text-base font-bold text-amber-400 mb-4">Select Deal</h2>
+          <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
+            <h2 className="text-base font-bold text-white mb-4">Select Deal</h2>
             <div className="relative">
               <select
                 className="input-dark text-sm appearance-none pr-8"
@@ -187,8 +182,8 @@ export default function UnderwritingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Inputs */}
             <div className="space-y-4">
-              <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
-                <h2 className="text-base font-bold text-amber-400 mb-4">Income Assumptions</h2>
+              <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
+                <h2 className="text-base font-bold text-white mb-4">Income Assumptions</h2>
                 <div className="space-y-3">
                   <div>
                     <label className="block text-xs text-white/50 mb-1.5">Economic Occupancy (%)</label>
@@ -197,8 +192,8 @@ export default function UnderwritingPage() {
                 </div>
               </div>
 
-              <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
-                <h2 className="text-base font-bold text-amber-400 mb-4">Expense Lines (Annual)</h2>
+              <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
+                <h2 className="text-base font-bold text-white mb-4">Expense Lines (Annual)</h2>
                 <div className="space-y-3">
                   {[
                     { label: 'Management Fee (%)', val: managementFee, set: setManagementFee, placeholder: '8', isPercent: true },
@@ -216,8 +211,8 @@ export default function UnderwritingPage() {
                 </div>
               </div>
 
-              <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
-                <h2 className="text-base font-bold text-amber-400 mb-4">Cap Rate Range</h2>
+              <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
+                <h2 className="text-base font-bold text-white mb-4">Cap Rate Range</h2>
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { label: 'Low Cap Rate (%)', val: capRateLow, set: setCapRateLow },
@@ -240,7 +235,7 @@ export default function UnderwritingPage() {
                 const v = getVerdict(noi, offerMid, sellerAsking, impliedCapRate, parseFloat(capRateMid), Number(selectedDeal.occupancyRate) || 0, Number(selectedDeal.units) || 0);
                 const VIcon = v.icon;
                 return (
-                  <div className="border rounded-2xl p-6 space-y-4" style={{ borderColor: `${v.color}40`, background: `${v.color}08` }}>
+                  <div className="border rounded-xl p-6 space-y-4" style={{ borderColor: `${v.color}40`, background: `${v.color}08` }}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${v.color}20` }}>
@@ -253,7 +248,7 @@ export default function UnderwritingPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-xs text-white/40">Suggested Offer</div>
-                        <div className="text-lg font-bold text-amber-400">{formatCurrency(offerMid)}</div>
+                        <div className="text-lg font-bold text-white">{formatCurrency(offerMid)}</div>
                         <div className="text-[10px] text-white/30">{formatCurrency(offerLow)} — {formatCurrency(offerHigh)}</div>
                       </div>
                     </div>
@@ -269,8 +264,8 @@ export default function UnderwritingPage() {
                       </div>
                       <div className="bg-white/[0.04] rounded-xl p-3">
                         <div className="flex items-center gap-1.5 mb-2">
-                          <Zap size={12} className="text-amber-400" />
-                          <span className="text-[10px] text-amber-400 uppercase tracking-wider font-bold">Biggest Assumption</span>
+                          <Zap size={12} className="text-white" />
+                          <span className="text-[10px] text-white uppercase tracking-wider font-bold">Biggest Assumption</span>
                         </div>
                         <p className="text-xs text-white/60">{v.assumption}</p>
                       </div>
@@ -286,8 +281,8 @@ export default function UnderwritingPage() {
                 );
               })()}
 
-              <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
-                <h2 className="text-base font-bold text-amber-400 mb-4">Income Statement</h2>
+              <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
+                <h2 className="text-base font-bold text-white mb-4">Income Statement</h2>
                 <div className="space-y-2">
                   {[
                     { label: 'GPRI (Gross Potential Rental Income)', value: formatCurrency(gpri), color: 'text-white' },
@@ -302,17 +297,17 @@ export default function UnderwritingPage() {
                   ))}
                   <div className="flex items-center justify-between py-3 mt-1">
                     <span className="font-bold text-white">Net Operating Income (NOI)</span>
-                    <span className="font-bold text-amber-400 text-xl">{formatCurrency(noi)}</span>
+                    <span className="font-bold text-white text-xl">{formatCurrency(noi)}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
-                <h2 className="text-base font-bold text-amber-400 mb-4">Offer Range</h2>
+              <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
+                <h2 className="text-base font-bold text-white mb-4">Offer Range</h2>
                 <div className="space-y-3">
                   {[
                     { label: `Low Offer (${capRateHigh}% cap)`, value: offerLow, color: 'text-red-400', bg: 'bg-red-500/10' },
-                    { label: `Mid Offer (${capRateMid}% cap)`, value: offerMid, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+                    { label: `Mid Offer (${capRateMid}% cap)`, value: offerMid, color: 'text-white', bg: 'bg-white/[0.04]' },
                     { label: `High Offer (${capRateLow}% cap)`, value: offerHigh, color: 'text-green-400', bg: 'bg-green-500/10' },
                   ].map((item) => (
                     <div key={item.label} className={`flex items-center justify-between p-4 rounded-xl ${item.bg}`}>
@@ -324,8 +319,8 @@ export default function UnderwritingPage() {
               </div>
 
               {sellerAsking > 0 && (
-                <div className="bg-white/3 border border-white/10 rounded-2xl p-6">
-                  <h2 className="text-base font-bold text-amber-400 mb-4">Seller Ask Analysis</h2>
+                <div className="bg-white/3 border border-white/[0.05] rounded-xl p-6">
+                  <h2 className="text-base font-bold text-white mb-4">Seller Ask Analysis</h2>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-white/60">Seller Asking</span>

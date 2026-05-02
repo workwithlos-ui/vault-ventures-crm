@@ -53,7 +53,7 @@ function ContactForm({ initial, onSave, onCancel, saving }: {
         <button onClick={onCancel} className="flex-1 px-3 py-2 bg-white/10 text-white rounded-lg text-sm hover:bg-white/15 flex items-center justify-center gap-1.5">
           <X size={14} /> Cancel
         </button>
-        <button onClick={() => onSave(form)} disabled={saving || !form.name.trim()} className="flex-1 px-3 py-2 bg-amber-500 text-black rounded-lg font-semibold text-sm hover:bg-amber-600 disabled:opacity-50 flex items-center justify-center gap-1.5">
+        <button onClick={() => onSave(form)} disabled={saving || !form.name.trim()} className="flex-1 px-3 py-2 bg-white text-[#09090b] rounded-lg font-semibold text-sm hover:bg-white/90 disabled:opacity-50 flex items-center justify-center gap-1.5">
           <Check size={14} /> {saving ? 'Saving...' : 'Save'}
         </button>
       </div>
@@ -65,18 +65,14 @@ export default function ContactsPage() {
   const router = useRouter();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState('');
-  const [search, setSearch] = useState('');
+const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const t = localStorage.getItem('auth_token');
-    if (!t) { router.push('/login'); return; }
-    setToken(t);
-    fetch('/api/contacts', { headers: { Authorization: `Bearer ${t}` } })
+fetch('/api/contacts', { headers: { Authorization: 'none' } })
       .then((r) => r.json())
       .then((data) => setContacts(Array.isArray(data) ? data : []))
       .catch(console.error)
@@ -88,7 +84,7 @@ export default function ContactsPage() {
     try {
       const res = await fetch('/api/contacts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', Authorization: 'none' },
         body: JSON.stringify(data),
       });
       const result = await res.json();
@@ -102,7 +98,7 @@ export default function ContactsPage() {
     try {
       await fetch(`/api/contacts/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', Authorization: 'none' },
         body: JSON.stringify(data),
       });
       setContacts((prev) => prev.map((c) => c.id === id ? { ...c, ...data } : c));
@@ -112,7 +108,7 @@ export default function ContactsPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('Delete this contact?')) return;
-    await fetch(`/api/contacts/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    await fetch(`/api/contacts/${id}`, { method: 'DELETE', headers: { Authorization: 'none' } });
     setContacts((prev) => prev.filter((c) => c.id !== id));
   };
 
@@ -123,20 +119,20 @@ export default function ContactsPage() {
     return matchSearch && matchType;
   });
 
-  if (loading) return <div className="min-h-screen bg-gradient-dark flex items-center justify-center"><div className="text-amber-500 text-lg">Loading contacts...</div></div>;
+  if (loading) return <div className="min-h-screen bg-[#09090b] flex items-center justify-center"><div className="text-white/80 text-lg">Loading contacts...</div></div>;
 
   return (
-    <div className="min-h-screen bg-gradient-dark flex">
+    <div className="min-h-screen bg-[#09090b] flex">
       <NavSidebar />
-      <div className="flex-1 ml-16 md:ml-56">
-        <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+      <div className="flex-1 ml-16 md:ml-52">
+        <header className="border-b border-white/[0.05] bg-[#09090b]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-40">
           <div>
             <h1 className="text-xl font-bold text-white">Contacts</h1>
             <p className="text-white/50 text-sm mt-0.5">{contacts.length} total contacts</p>
           </div>
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-black rounded-lg font-semibold hover:bg-amber-600 transition-colors text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-white text-[#09090b] rounded-lg font-semibold hover:bg-white/90 transition-colors text-sm"
           >
             <Plus size={16} /> Add Contact
           </button>
@@ -145,8 +141,8 @@ export default function ContactsPage() {
         <div className="max-w-5xl mx-auto p-6">
           {/* Add Form */}
           {showAdd && (
-            <div className="bg-white/3 border border-amber-500/30 rounded-2xl p-5 mb-6">
-              <h3 className="text-base font-bold text-amber-400 mb-4">New Contact</h3>
+            <div className="bg-white/3 border border-white/[0.12] rounded-xl p-5 mb-6">
+              <h3 className="text-base font-bold text-white mb-4">New Contact</h3>
               <ContactForm initial={{}} onSave={handleAdd} onCancel={() => setShowAdd(false)} saving={saving} />
             </div>
           )}
@@ -178,7 +174,7 @@ export default function ContactsPage() {
           ) : (
             <div className="space-y-3">
               {filtered.map((c) => (
-                <div key={c.id} className="bg-white/3 border border-white/10 rounded-2xl p-4 hover:border-white/20 transition-all">
+                <div key={c.id} className="bg-white/3 border border-white/[0.05] rounded-xl p-4 hover:border-white/[0.08] transition-all">
                   {editId === c.id ? (
                     <ContactForm initial={c} onSave={(data) => handleEdit(c.id, data)} onCancel={() => setEditId(null)} saving={saving} />
                   ) : (
@@ -208,7 +204,7 @@ export default function ContactsPage() {
                         {c.notes && <div className="text-xs text-white/35 mt-1.5 line-clamp-2">{c.notes}</div>}
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
-                        <button onClick={() => setEditId(c.id)} className="p-2 text-white/30 hover:text-amber-400 transition-colors rounded-lg hover:bg-white/5">
+                        <button onClick={() => setEditId(c.id)} className="p-2 text-white/30 hover:text-white transition-colors rounded-lg hover:bg-white/5">
                           <Edit2 size={15} />
                         </button>
                         <button onClick={() => handleDelete(c.id)} className="p-2 text-white/30 hover:text-red-400 transition-colors rounded-lg hover:bg-white/5">
